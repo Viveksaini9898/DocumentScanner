@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">Document Scanner</string>
+    <string name="share_message">Share</string>
+    <string name="home">Home</string>
+    <string name="menu_gallery">Gallery</string>
+    <string name="settings">Settings</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="confirm">Confirm</string>
+    <string name="retake">Retake</string>
+    <string name="cancel">Cancel</string>
+
+</resources>
