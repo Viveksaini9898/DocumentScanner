@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+<layout >
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
@@ -17,32 +18,25 @@
             android:id="@+id/recycler_view"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:nestedScrollingEnabled="false" />
+            android:nestedScrollingEnabled="false"
+            tools:listitem="@layout/row_document"/>
 
     </LinearLayout>
 
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
+    <androidx.appcompat.widget.AppCompatTextView
+        android:id="@+id/fab"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
-        android:layout_marginBottom="@dimen/dimen_20dp"
         android:layout_marginEnd="@dimen/dimen_20dp"
-        app:srcCompat="@drawable/ic_photo_camera_black_24dp"
-        android:id="@+id/fab"/>
-
-    <FrameLayout
-        android:id="@+id/gallery_progress"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:background="@color/teal_200"
+        android:layout_marginBottom="@dimen/dimen_30dp"
+        android:background="@drawable/rounded_button"
+        android:gravity="center"
         android:padding="12dp"
-        android:visibility="gone">
+        android:text="Proceed"
+        android:textColor="@color/black"
+        android:textSize="@dimen/dimen_18dp"
+        android:textStyle="bold" />
 
-      <!--  <com.github.ybq.android.spinkit.SpinKitView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            app:SpinKit_Color="@android:color/white"
-            app:SpinKit_Style="CubeGrid" />-->
-    </FrameLayout>
 </FrameLayout>
+</layout>

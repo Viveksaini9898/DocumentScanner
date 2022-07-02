@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<layout>
+
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#414141"
+        android:orientation="vertical"
+        tools:context=".activity.ViewPageActivity">
+
+
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/app_default"
+            app:contentInsetLeft="0dp"
+            app:contentInsetStart="0dp"
+            app:contentInsetStartWithNavigation="0dp">
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <LinearLayout
+                    android:id="@+id/rename"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_centerVertical="true"
+                    android:layout_marginStart="@dimen/dimen_10dp"
+                    android:layout_marginEnd="@dimen/dimen_20dp"
+                    android:layout_toStartOf="@id/savePdf"
+                    android:layout_toEndOf="@id/back"
+                    android:orientation="vertical">
+
+                    <androidx.appcompat.widget.AppCompatTextView
+                        android:id="@+id/titleTv"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:ellipsize="end"
+                        android:lines="1"
+                        android:text="@string/settings"
+                        android:textColor="@color/black"
+                        android:textSize="18dp" />
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:layout_marginTop="4dp"
+                        android:background="@color/black" />
+                </LinearLayout>
+
+                <androidx.appcompat.widget.AppCompatImageView
+                    android:id="@+id/back"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:layout_centerVertical="true"
+                    android:layout_marginEnd="@dimen/dimen_5dp"
+                    android:background="?selectableItemBackground"
+                    android:scaleType="centerInside"
+                    app:srcCompat="@drawable/ic_arrow_back_black_24dp"
+                    app:tint="@color/black" />
+
+                <androidx.appcompat.widget.AppCompatTextView
+                    android:id="@+id/savePdf"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentEnd="true"
+                    android:layout_centerVertical="true"
+                    android:layout_gravity="center"
+                    android:layout_marginEnd="@dimen/dimen_10dp"
+                    android:text="@string/save_pdf"
+                    android:textColor="@color/black"
+                    android:textSize="18sp" />
+
+            </RelativeLayout>
+        </androidx.appcompat.widget.Toolbar>
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1">
+
+
+            <com.document.scanner.view.CustomViewPager
+                android:id="@+id/view_pager"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+
+
+            <FrameLayout
+                android:id="@+id/progress"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="#B91F1F1F"
+                android:visibility="gone">
+
+                <com.google.android.material.progressindicator.CircularProgressIndicator
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:indeterminate="true"
+                    app:indicatorColor="@color/app_default"
+                    app:trackColor="@color/white" />
+            </FrameLayout>
+        </RelativeLayout>
+
+
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/dimen_70dp"
+            android:layout_alignParentBottom="true"
+            android:scrollbars="none"
+            android:background="@color/black">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:orientation="horizontal">
+
+                <com.document.scanner.view.BottomButton
+                    android:id="@+id/cropLayout"
+                    android:layout_width="80dp"
+                    android:layout_height="@dimen/dimen_70dp"
+                    app:icon="@drawable/ic_crop"
+                    app:text="@string/crop"
+                    />
+                <com.document.scanner.view.BottomButton
+                    android:id="@+id/ocr"
+                    android:layout_width="80dp"
+                    android:layout_height="@dimen/dimen_70dp"
+                    app:icon="@drawable/ic_ocr"
+                    app:text="@string/ocr"
+                    />
+                <com.document.scanner.view.BottomButton
+                    android:id="@+id/modify"
+                    android:layout_width="80dp"
+                    android:layout_height="@dimen/dimen_70dp"
+                    app:icon="@drawable/ic_modify"
+                    app:text="@string/modify"
+                    />
+                <com.document.scanner.view.BottomButton
+                    android:id="@+id/speak"
+                    android:layout_width="80dp"
+                    android:layout_height="@dimen/dimen_70dp"
+                    app:icon="@drawable/ic_volume_up_black_24dp"
+                    app:text="@string/speak"
+                    />
+                <com.document.scanner.view.BottomButton
+                    android:id="@+id/reorder"
+                    android:layout_width="80dp"
+                    android:layout_height="@dimen/dimen_70dp"
+                    app:icon="@drawable/ic_reorder_black_24dp"
+                    app:text="@string/reorder"
+                    />
+                <com.document.scanner.view.BottomButton
+                    android:id="@+id/note"
+                    android:layout_width="80dp"
+                    android:layout_height="@dimen/dimen_70dp"
+                    app:icon="@drawable/ic_note"
+                    app:text="@string/note"
+                    />
+
+            </LinearLayout>
+        </HorizontalScrollView>
+    </LinearLayout>
+
+</layout>

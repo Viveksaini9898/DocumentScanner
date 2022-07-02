@@ -1,0 +1,180 @@
+
+package com.document.scanner.detector
+
+import android.graphics.Bitmap
+import android.graphics.PointF
+import com.document.scanner.extension.*
+import com.document.scanner.extension.applyGaussianBlur
+import com.document.scanner.extension.applyGrayscaleEffect
+import com.document.scanner.extension.toMat
+import com.document.scanner.extension.toPointF
+import com.document.scanner.view.crop.DocShape
+
+import org.opencv.core.*
+import org.opencv.imgproc.Imgproc
+import javax.inject.Inject
+import kotlin.math.abs
+
+
+interface DocShapeDetector {
+
+    fun detectShape(image: Bitmap): DocShape
+
+}
+
+
+internal class OpenCvDocShapeDetector @Inject constructor(
+    private val docCoordsOrderer: DocCoordsOrderer
+) : DocShapeDetector {
+
+
+    private companion object {
+
+        private const val DOWNSCALED_IMAGE_SIZE = 600f
+
+        private const val GAUSSIAN_BLUR_KERNEL_SIZE = 5.0
+
+        private const val CANNY_THRESHOLD_MIN = 75.0
+        private const val CANNY_THRESHOLD_MAX = 200.0
+
+        private const val LARGE_CONTOURS_LIMIT_COUNT = 5
+
+        private const val CONTOUR_APPROX_ACCURACY_PERCENTAGE = 2.0
+
+        private const val RECT_SIDE_COUNT = 4
+
+        private const val SOURCE_IMAGE_AREA_THRESHOLD_MIN = 0.2
+        private const val SOURCE_IMAGE_AREA_THRESHOLD_MAX = 0.98
+
+    }
+
+
+    override fun detectShape(image: Bitmap): DocShape {
+        val largestRectangleCoords = findLargestRectangleCoords(image)
+        val docShape = docCoordsOrderer.order(largestRectangleCoords)
+
+        return (docShape ?: getWholeImageShape(image))
+    }
+
+
+    private fun findLargestRectangleCoords(image: Bitmap): List<PointF> {
+        val imageMat = image.toMat()
+        val maxDimension = imageMat.width().coerceAtLeast(imageMat.height()).toDouble()
+        val scaleRatio = (DOWNSCALED_IMAGE_SIZE / maxDimension)
+        val downscaledImageMat = calculateDownscaledMatrix(scaleRatio, imageMat)
+        val largestRectangleMat = (findLargestRectangleMat(downscaledImageMat) ?: return emptyList())
+        val scaledLargestRectangleMat = scaleRectangle(largestRectangleMat, (1.0 / scaleRatio))
+
+        return scaledLargestRectangleMat.toList()
+            .map(Point::toPointF)
+    }
+
+
+    private fun calculateDownscaledMatrix(scaleRatio: Double, imageMat: Mat): Mat {
+        val newWidth = (imageMat.width() * scaleRatio)
+        val newHeight = (imageMat.height() * scaleRatio)
+        val downscaledSize = Size(newWidth, newHeight)
+        val downscaledMat = Mat(downscaledSize, imageMat.type())
+
+        Imgproc.resize(imageMat, downscaledMat, downscaledSize)
+
+        return downscaledMat
+    }
+
+
+    private fun findLargestRectangleMat(imageMat: Mat): MatOfPoint2f? {
+        val imageArea = (imageMat.rows() * imageMat.cols())
+        val grayscaleImageMat = applyGrayscaleEffect(imageMat)
+        val smoothedImageMat = applyGaussianBlur(grayscaleImageMat)
+        val imageEdgesMat = findImageEdges(smoothedImageMat)
+        val imageContours = findImageContours(imageEdgesMat)
+        val largestRectContour = findLargestRectangularContour(imageContours, imageArea)
+
+        return largestRectContour
+    }
+
+
+    private fun applyGrayscaleEffect(imageMat: Mat): Mat {
+        return imageMat.applyGrayscaleEffect()
+            .also { imageMat.release() }
+    }
+
+
+    private fun applyGaussianBlur(imageMat: Mat): Mat {
+        return imageMat.applyGaussianBlur(GAUSSIAN_BLUR_KERNEL_SIZE)
+            .also { imageMat.release() }
+    }
+
+
+    private fun findImageEdges(imageMat: Mat): Mat {
+        return imageMat.findCannyEdges(CANNY_THRESHOLD_MIN, CANNY_THRESHOLD_MAX)
+            .also { imageMat.release() }
+    }
+
+
+    private fun findImageContours(edgesMat: Mat): List<MatOfPoint> {
+        return edgesMat.findContours()
+            .also { edgesMat.release() }
+    }
+
+
+    private fun findLargestRectangularContour(
+        contours: List<MatOfPoint>,
+        sourceImageArea: Int
+    ): MatOfPoint2f? {
+        val largeContours = contours.sortedByDescending(Imgproc::contourArea)
+            .take(LARGE_CONTOURS_LIMIT_COUNT)
+
+        for(largeContour in largeContours) {
+            val approxCurve = approximatePolygonalCurve(largeContour)
+
+            if(isRectangle(approxCurve, sourceImageArea)) {
+                return approxCurve
+            }
+        }
+
+        return null
+    }
+
+
+    private fun approximatePolygonalCurve(contour: MatOfPoint): MatOfPoint2f {
+        return contour.approxPolyCurve(
+            accuracyPercentage = CONTOUR_APPROX_ACCURACY_PERCENTAGE,
+            isCurveClosed = true
+        )
+    }
+
+
+    private fun isRectangle(curve: MatOfPoint2f, sourceImageArea: Int): Boolean {
+        if(curve.rows() != RECT_SIDE_COUNT) return false
+
+        val curveArea = abs(Imgproc.contourArea(curve))
+        val minimumArea = (sourceImageArea * SOURCE_IMAGE_AREA_THRESHOLD_MIN)
+        val maximumArea = (sourceImageArea * SOURCE_IMAGE_AREA_THRESHOLD_MAX)
+        val hasAcceptableArea = ((curveArea > minimumArea) && (curveArea < maximumArea))
+
+        return hasAcceptableArea
+    }
+
+
+    private fun scaleRectangle(rectangle: MatOfPoint2f, scale: Double): MatOfPoint2f {
+        val originalRecCoords = rectangle.toList()
+        val resultRecCoords = originalRecCoords.map {
+            Point(it.x * scale, it.y * scale)
+        }
+
+        return MatOfPoint2f().apply { fromList(resultRecCoords) }
+    }
+
+
+    private fun getWholeImageShape(image: Bitmap): DocShape {
+        return DocShape(
+            topLeftCoord = PointF(0f, 0f),
+            topRightCoord = PointF(image.width.toFloat(), 0f),
+            bottomLeftCoord = PointF(0f, image.height.toFloat()),
+            bottomRightCoord = PointF(image.width.toFloat(), image.height.toFloat())
+        )
+    }
+
+
+}

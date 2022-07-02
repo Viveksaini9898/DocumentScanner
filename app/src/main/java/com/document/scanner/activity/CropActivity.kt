@@ -3,20 +3,26 @@ package com.document.scanner.activity
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.net.Uri
 import android.os.Bundle
 import android.view.Gravity
 import android.view.View
 import android.widget.LinearLayout
+import androidx.activity.result.ActivityResult
+import androidx.activity.viewModels
 import androidx.lifecycle.lifecycleScope
 import com.document.scanner.R
 import com.document.scanner.constants.*
 import com.document.scanner.data.BoundingRect
 import com.document.scanner.databinding.ActivityCropBinding
+import com.document.scanner.extension.viewBinding
+import com.document.scanner.task.backGroundThread
 import com.document.scanner.utils.DetectBox
 import com.document.scanner.utils.Utils.createPhotoFile
 import com.document.scanner.utils.Utils.getDeviceWidth
 import com.document.scanner.utils.Utils.rotateMat
 import com.document.scanner.utils.Utils.saveMat
+import com.document.scanner.viewmodel.BaseViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.opencv.android.Utils.bitmapToMat
@@ -30,16 +36,21 @@ import kotlin.math.max
 import kotlin.math.pow
 import kotlin.math.sqrt
 
-class CropActivity : BaseActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        val binding = ActivityCropBinding.inflate(layoutInflater)
-        setContentView(binding.root)
+class CropActivity : BaseActivity<ActivityCropBinding, BaseViewModel>() {
+
+    val viewPageIntent by lazy { intent.getStringExtra(INTENT_VIEW_FRAME) }
+
+    fun onCreate() = with(viewBinding) {
+
+        tool.titleTv.text = getString(R.string.crop)
+        tool.back.setOnClickListener {
+            finish()
+        }
 
         var croppedUri = intent.getStringExtra(INTENT_CROPPED_PATH)
         val editedUri = intent.getStringExtra(INTENT_EDITED_PATH)
-        if (editedUri != null) {
-            binding.tvRetake.text = resources?.getString(R.string.cancel)
+        if (editedUri != null || viewPageIntent != null) {
+            tvRetake.text = resources?.getString(R.string.cancel)
         }
 
         val uri = intent.getStringExtra(INTENT_SOURCE_PATH)
@@ -58,7 +69,7 @@ class CropActivity : BaseActivity() {
         val params = LinearLayout.LayoutParams(width, height).apply { gravity = Gravity.CENTER }
         val ratio = width / bitmap.width.toDouble()
 
-        binding.cvCrop.apply {
+        cvCrop.apply {
             layoutParams = params
             setImageBitmap(bitmap)
             animate().rotation(angle.toFloat())
@@ -69,7 +80,7 @@ class CropActivity : BaseActivity() {
         }
 
         lifecycleScope.launch(Dispatchers.Default) {
-            binding.cvCrop.setBoundingRect(
+            cvCrop.setBoundingRect(
                 DetectBox.findCorners(bitmap, 0) ?: BoundingRect().apply {
                     val w = bitmap.width
                     val h = bitmap.height
@@ -81,24 +92,27 @@ class CropActivity : BaseActivity() {
                 })
         }
 
-        binding.tvRetake.setOnClickListener {
+
+        tvRetake.setOnClickListener {
             setResult(RESULT_CANCELED)
             finish()
         }
 
-        binding.tvConfirm.setOnClickListener {
-            binding.progressFrame.visibility = View.VISIBLE
-            lifecycleScope.launch(Dispatchers.Default) {
+
+        tvConfirm.setOnClickListener {
+            progressFrame.visibility = View.VISIBLE
+            backGroundThread {
                 editedUri?.let { File(it).delete() }
                 croppedUri = croppedUri ?: createPhotoFile(this@CropActivity).absolutePath
-                getPerspectiveTransform(
-                    bitmap,
-                    binding.cvCrop.getBoundingRect(),
-                    ratio
-                ).run {
-                    rotateMat(this, angle)
-                    saveMat(this, croppedUri)
-                }
+                    getPerspectiveTransform(
+                        bitmap,
+                        cvCrop.getBoundingRect(),
+                        ratio
+                    ).run {
+                        rotateMat(this, angle)
+                        saveMat(this, croppedUri)
+                    }
+
                 bitmap.recycle()
 
                 setResult(RESULT_OK, Intent().apply {
@@ -264,5 +278,19 @@ class CropActivity : BaseActivity() {
 
             return hwRatio
         }
+    }
+
+    override val viewBinding: ActivityCropBinding by viewBinding(ActivityCropBinding::inflate)
+
+    override val viewModel: BaseViewModel? by viewModels()
+
+    override fun onLoadData() {
+    }
+
+    override fun onResult(result: ActivityResult, requestCode: Int) {
+    }
+
+    override fun onReady() {
+        onCreate()
     }
 }

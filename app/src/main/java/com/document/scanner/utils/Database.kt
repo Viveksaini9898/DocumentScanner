@@ -8,10 +8,10 @@ import androidx.room.RoomDatabase
 import com.document.scanner.dao.DocumentDao
 import com.document.scanner.dao.FrameDao
 import com.document.scanner.data.Document
-import com.wonderscan.android.data.Frame
+import com.document.scanner.data.Frame
 
 
-@Database(entities = [Document::class, Frame::class], version = 5, exportSchema = false)
+@Database(entities = [Document::class, Frame::class], version = 1, exportSchema = false)
 abstract class MyDatabase : RoomDatabase() {
     abstract fun frameDao(): FrameDao
     abstract fun documentDao(): DocumentDao

@@ -13,8 +13,16 @@
         android:layout_above="@+id/bottomBar"
         android:orientation="vertical">
 
-        <include layout="@layout/layout_toolbar" />
-
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            app:contentInsetLeft="0dp"
+            app:contentInsetStartWithNavigation="0dp"
+            app:contentInsetStart="0dp"
+            android:background="@color/app_default"
+            android:layout_height="wrap_content"
+            android:paddingHorizontal="@dimen/dimen_10dp"
+            />
         <FrameLayout
             android:id="@+id/container"
             android:layout_width="match_parent"

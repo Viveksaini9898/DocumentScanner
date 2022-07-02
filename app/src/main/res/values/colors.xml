@@ -3,10 +3,17 @@
     <color name="purple_200">#FFBB86FC</color>
     <color name="purple_500">#FF6200EE</color>
     <color name="purple_700">#FF3700B3</color>
-    <color name="teal_200">#FF03DAC5</color>
+    <color name="teal_200">@color/app_default</color>
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
     <color name="colorAccent">#FF03DAC5</color>
     <color name="colorPrimary">#FF018786</color>
+
+    <color name="app_default">#8d71fe</color>
+
+    <color name="doc_crop_border_valid_shape_line_color">#00be75</color>
+    <color name="doc_crop_border_invalid_shape_line_color">#cc2e4e</color>
+    <color name="doc_crop_border_handle_stroke_color">@color/colorAccent</color>
+    <color name="doc_crop_border_handle_inner_color">#881191d0</color>
 </resources>

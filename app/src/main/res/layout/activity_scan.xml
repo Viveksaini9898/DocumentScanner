@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -12,13 +11,14 @@
     <FrameLayout
         android:id="@+id/camera_frame"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="match_parent"
+        android:layout_above="@+id/rv">
 
         <androidx.camera.view.PreviewView
             android:id="@+id/viewFinder"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="@android:color/darker_gray" />
+            android:background="@android:color/black" />
 
         <com.document.scanner.view.ScanView
             android:id="@+id/scan_view"
@@ -27,60 +27,83 @@
     </FrameLayout>
 
 
-    <FrameLayout
+    <RelativeLayout
+        android:id="@+id/rv"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerVertical="true"
         android:background="@android:color/black"
-        android:minHeight="150dp"
-        android:orientation="vertical">
-
-
-        <ProgressBar
-            android:id="@+id/pb_scan"
-            android:layout_width="75dp"
-            android:layout_height="75dp"
-            android:layout_gravity="center"
-            android:visibility="gone" />
+        android:minHeight="120dp">
 
         <ImageView
-            android:id="@+id/btn_capture"
+            android:layout_width="@dimen/dimen_30dp"
+            android:layout_height="@dimen/dimen_30dp"
+            android:id="@+id/flash"
+            android:layout_centerVertical="true"
+            android:layout_marginStart="@dimen/dimen_20dp"
+            android:src="@drawable/ic_flash_auto_black_24dp"
+            app:tint="@color/white" />
+
+        <RelativeLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:layout_margin="12dp"
-            android:background="@drawable/ic_camera_button" />
+            android:layout_centerInParent="true">
 
-        <TextView
-            android:id="@+id/page_count"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:layout_gravity="end|center_vertical"
-            android:layout_marginEnd="28dp"
-            android:layout_marginBottom="24dp"
-            android:background="@drawable/ic_image_bubble"
-            android:elevation="6dp"
-            android:gravity="center"
-            android:text="1"
-            android:textAlignment="center"
-            android:textColor="@android:color/white"
-            android:visibility="gone"
-            android:textSize="12sp"/>
-
-        <androidx.cardview.widget.CardView
-            android:layout_width="54dp"
-            android:layout_height="54dp"
-            android:layout_gravity="end|center_vertical"
-            android:layout_marginEnd="44dp"
-            app:cardBackgroundColor="@android:color/darker_gray"
-            app:cardCornerRadius="6dp">
+            <ProgressBar
+                android:id="@+id/pb_scan"
+                android:layout_width="75dp"
+                android:layout_height="75dp"
+                android:layout_centerInParent="true"
+                android:layout_gravity="center"
+                android:visibility="gone" />
 
             <ImageView
-                android:id="@+id/iv_recent_capture"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:scaleType="centerCrop" />
-        </androidx.cardview.widget.CardView>
+                android:id="@+id/btn_capture"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:layout_gravity="center"
+                android:layout_margin="12dp"
+                android:background="@drawable/ic_camera_button" />
+        </RelativeLayout>
 
-    </FrameLayout>
-</LinearLayout>
+        <RelativeLayout
+            android:layout_width="@dimen/dimen_70dp"
+            android:layout_height="@dimen/dimen_70dp"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:layout_marginEnd="@dimen/dimen_20dp">
+
+            <TextView
+                android:id="@+id/page_count"
+                android:layout_width="@dimen/dimen_30dp"
+                android:layout_height="@dimen/dimen_30dp"
+                android:background="@drawable/ic_image_bubble"
+                android:elevation="6dp"
+                android:gravity="center"
+                android:layout_alignParentEnd="true"
+                android:layout_alignParentTop="true"
+                android:text="1"
+                android:textAlignment="center"
+                android:textColor="@android:color/white"
+                android:textSize="12sp"
+                android:visibility="gone" />
+
+            <androidx.cardview.widget.CardView
+                android:layout_width="@dimen/dimen_50dp"
+                android:layout_height="@dimen/dimen_50dp"
+                android:layout_gravity="end|center_vertical"
+                app:cardBackgroundColor="@android:color/darker_gray"
+                android:layout_centerInParent="true"
+                app:cardCornerRadius="6dp">
+
+                <ImageView
+                    android:id="@+id/iv_recent_capture"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:scaleType="centerCrop" />
+            </androidx.cardview.widget.CardView>
+        </RelativeLayout>
+    </RelativeLayout>
+</RelativeLayout>

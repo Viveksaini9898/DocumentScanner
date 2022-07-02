@@ -21,4 +21,10 @@
     <dimen name="dimen_4dp">4dp</dimen>
     <dimen name="dimen_60dp">60dp</dimen>
     <dimen name="dimen_55dp">55dp</dimen>
+
+    <dimen name="doc_crop_border_handle_size">20dp</dimen>
+    <dimen name="doc_crop_border_handle_size_deviation">1dp</dimen>
+    <dimen name="doc_crop_border_handle_stroke_width">1.5dp</dimen>
+    <dimen name="doc_crop_border_shape_line_width">1dp</dimen>
+    <dimen name="doc_scanner_image_margin">16dp</dimen>
 </resources>

@@ -1,5 +1,6 @@
 package com.document.scanner.activity
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -10,9 +11,13 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.LinearLayout
+import android.widget.RelativeLayout
 import android.widget.Toast
+import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
 import androidx.camera.core.*
+import androidx.camera.core.ImageCapture.*
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -25,11 +30,12 @@ import com.document.scanner.constants.INTENT_CROPPED_PATH
 import com.document.scanner.constants.INTENT_DOCUMENT_ID
 import com.document.scanner.constants.INTENT_SOURCE_PATH
 import com.document.scanner.databinding.ActivityScanBinding
+import com.document.scanner.extension.viewBinding
+import com.document.scanner.task.uiThread
 import com.document.scanner.utils.DetectBox
 import com.document.scanner.utils.Utils
 import com.document.scanner.utils.YuvToRgbConverter
 import com.document.scanner.viewmodel.ScanActivityViewModel
-import com.document.scanner.viewmodel.ScanActivityViewModelFactory
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -37,7 +43,11 @@ import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.Executor
 
-class ScanActivity : BaseActivity() {
+class ScanActivity : BaseActivity<ActivityScanBinding,ScanActivityViewModel>() {
+
+    override val viewModel:ScanActivityViewModel by viewModels()
+
+    private var imageCapture: ImageCapture? = null
     private val requestCodePermissions = 1001
     private val requiredPermissions =
         arrayOf("android.permission.CAMERA", "android.permission.WRITE_EXTERNAL_STORAGE")
@@ -45,18 +55,8 @@ class ScanActivity : BaseActivity() {
     private var angle = 0
 
     private lateinit var executor: Executor
-    private lateinit var binding: ActivityScanBinding
-    private lateinit var viewModel: ScanActivityViewModel
     private lateinit var converter: YuvToRgbConverter
 
-    private fun initialiseViewModel() {
-        (application as ScannerApp).database?.let { db ->
-            viewModel = ViewModelProvider(
-                this,
-                ScanActivityViewModelFactory(db.documentDao(), db.frameDao())
-            )[ScanActivityViewModel::class.java]
-        }
-    }
 
     private fun confirm() {
         val simpleDateFormat = SimpleDateFormat("dd-MMM-yyyy hh:mm:ss", Locale.getDefault())
@@ -64,27 +64,40 @@ class ScanActivity : BaseActivity() {
         viewModel.capture(name, angle, count, this)
     }
 
-    @ExperimentalGetImage
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        binding = ActivityScanBinding.inflate(layoutInflater)
-        setContentView(binding.root)
-        executor = ContextCompat.getMainExecutor(this)
-        converter = YuvToRgbConverter(this)
-        initialiseViewModel()
-        intent.getStringExtra(INTENT_DOCUMENT_ID)?.let { docId ->
-            viewModel.getPageCount(docId).observe(this) { count -> this.count = count }
-        }
-        val width = Utils.getDeviceWidth()
-        val height = (width * (4 / 3f)).toInt()
-        binding.cameraFrame.layoutParams = LinearLayout.LayoutParams(width, height)
-        binding.ivRecentCapture.setOnClickListener {
-            confirm()
-        }
+     @SuppressLint("UnsafeOptInUsageError")
+     fun onCreate() {
+
         if (allPermissionsGranted()) {
             startCamera()
         } else {
             ActivityCompat.requestPermissions(this, requiredPermissions, requestCodePermissions)
+        }
+
+        executor = ContextCompat.getMainExecutor(this)
+        converter = YuvToRgbConverter(this)
+        intent.getStringExtra(INTENT_DOCUMENT_ID)?.let { docId ->
+            viewModel.getPageCount(docId).observe(this) { count -> this.count = count }
+        }
+        viewBinding.ivRecentCapture.setOnClickListener {
+            confirm()
+        }
+
+
+        viewBinding.flash.setOnClickListener {
+            when (imageCapture?.flashMode) {
+                FLASH_MODE_OFF -> {
+                    viewBinding.flash.setImageResource(R.drawable.ic_flash_on_black_24dp)
+                    imageCapture?.flashMode = FLASH_MODE_ON
+                }
+                FLASH_MODE_ON -> {
+                    viewBinding.flash.setImageResource(R.drawable.ic_flash_auto_black_24dp)
+                    imageCapture?.flashMode = FLASH_MODE_AUTO
+                }
+                FLASH_MODE_AUTO -> {
+                    viewBinding.flash.setImageResource(R.drawable.ic_flash_off_black_24dp)
+                    imageCapture?.flashMode = FLASH_MODE_OFF
+                }
+            }
         }
     }
 
@@ -100,6 +113,7 @@ class ScanActivity : BaseActivity() {
         }
         return true
     }
+
 
     @ExperimentalGetImage
     override fun onRequestPermissionsResult(
@@ -130,17 +144,15 @@ class ScanActivity : BaseActivity() {
 
     @ExperimentalGetImage
     fun processImage(imageProxy: ImageProxy) {
-        imageProxy.image?.let { image ->
-            if (image.format == ImageFormat.YUV_420_888) {
-                lifecycleScope.launch(Dispatchers.Default) {
-                    Bitmap.createBitmap(image.width, image.height, Bitmap.Config.ARGB_8888)
+        imageProxy.image?.apply {
+            if (this.format == ImageFormat.YUV_420_888) {
+                uiThread {
+                    Bitmap.createBitmap(this@apply.width, this@apply.height, Bitmap.Config.ARGB_8888)
                         .let { bitmap ->
-                            converter.yuvToRgb(image, bitmap)
-                            DetectBox.findCorners(bitmap, angle).let { box ->
+                            converter.yuvToRgb(this@apply, bitmap)
+                            DetectBox.findCorners(bitmap, angle).let {
                                 imageProxy.close()
-                                lifecycleScope.launch(Dispatchers.Main) {
-                                    binding.scanView.setBoundingRect(box)
-                                }
+                                viewBinding.scanView.setBoundingRect(it)
                             }
                         }
                 }
@@ -156,48 +168,52 @@ class ScanActivity : BaseActivity() {
         val cameraSelector = CameraSelector.Builder()
             .requireLensFacing(CameraSelector.LENS_FACING_BACK)
             .build()
-        val builder = ImageCapture.Builder()
-        val imageCapture = builder.build()
+        val builder = Builder()
+        imageCapture = builder.build()
         val imageAnalysis = ImageAnalysis.Builder().build()
 
-        preview.setSurfaceProvider(binding.viewFinder.surfaceProvider)
+
+        preview.setSurfaceProvider(viewBinding.viewFinder.surfaceProvider)
         cameraProvider.bindToLifecycle(this, cameraSelector, preview, imageCapture, imageAnalysis)
-        imageAnalysis.setAnalyzer(ContextCompat.getMainExecutor(this), { imageProxy: ImageProxy ->
+        imageAnalysis.setAnalyzer(ContextCompat.getMainExecutor(this)) { imageProxy: ImageProxy ->
             angle = imageProxy.imageInfo.rotationDegrees
             processImage(imageProxy)
-        })
+        }
 
-        binding.btnCapture.setOnClickListener {
-            binding.pbScan.visibility = View.VISIBLE
+
+        viewBinding.btnCapture.setOnClickListener {
+            imageCapture?.flashMode
+            viewBinding.pbScan.visibility = View.VISIBLE
             val file = Utils.createPhotoFile(this)
-            imageCapture.takePicture(
-                ImageCapture.OutputFileOptions.Builder(file).build(),
+            imageCapture?.takePicture(
+                OutputFileOptions.Builder(file).build(),
                 executor,
-                object : ImageCapture.OnImageSavedCallback {
-                    override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
+                object : OnImageSavedCallback {
+                    override fun onImageSaved(outputFileResults: OutputFileResults) {
                         Intent(this@ScanActivity, CropActivity::class.java).let {
                             it.putExtra(INTENT_SOURCE_PATH, file.absolutePath)
                             it.putExtra(INTENT_ANGLE, angle)
                             resultLauncher.launch(it)
                         }
-                        binding.pbScan.visibility = View.GONE
+                        viewBinding.pbScan.visibility = View.GONE
                     }
 
                     override fun onError(error: ImageCaptureException) {
                         Log.e(TAG, Log.getStackTraceString(error))
                     }
                 })
+
         }
     }
 
-    private var resultLauncher =
+    override var resultLauncher =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode == Activity.RESULT_OK) {
                 result.data?.let { intent ->
                     val croppedPath = intent.getStringExtra(INTENT_CROPPED_PATH)
                     val sourcePath = intent.getStringExtra(INTENT_SOURCE_PATH)
                     viewModel.addPath(sourcePath!!, croppedPath!!)
-                    binding.let {
+                    viewBinding.let {
                         it.ivRecentCapture.setImageBitmap(BitmapFactory.decodeFile(croppedPath))
                         if (it.pageCount.visibility != View.VISIBLE) it.pageCount.visibility =
                             View.VISIBLE
@@ -209,5 +225,17 @@ class ScanActivity : BaseActivity() {
 
     companion object {
         val TAG: String = ScanActivity::class.java.simpleName
+    }
+
+    override val viewBinding: ActivityScanBinding by viewBinding(ActivityScanBinding::inflate)
+
+    override fun onLoadData() {
+    }
+
+    override fun onResult(result: ActivityResult, requestCode: Int) {
+    }
+
+    override fun onReady() {
+        onCreate()
     }
 }

@@ -6,7 +6,7 @@ import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.pdf.PdfDocument
-import com.wonderscan.android.data.Frame
+import com.document.scanner.data.Frame
 
 class ExportPdf {
 

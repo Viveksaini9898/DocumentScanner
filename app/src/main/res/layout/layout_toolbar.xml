@@ -3,10 +3,38 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/toolbar"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:background="@color/colorPrimary"
-    android:elevation="12dp"
     app:contentInsetLeft="0dp"
-    app:title=""
-    app:contentInsetStart="0dp">
+    app:contentInsetStartWithNavigation="0dp"
+    app:contentInsetStart="0dp"
+    android:background="@color/app_default"
+    android:layout_height="wrap_content"
+    >
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/titleTv"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:textColor="@color/black"
+            android:layout_centerVertical="true"
+            android:text="@string/settings"
+            android:layout_toEndOf="@id/back"
+            android:textSize="18sp"
+            />
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/back"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_centerVertical="true"
+            android:layout_marginEnd="@dimen/dimen_5dp"
+            android:background="?selectableItemBackground"
+            android:scaleType="centerInside"
+            app:srcCompat="@drawable/ic_arrow_back_black_24dp"
+            app:tint="@color/black"/>
+
+    </RelativeLayout>
 </androidx.appcompat.widget.Toolbar>

@@ -1,15 +1,16 @@
 package com.document.scanner.utils
 
-import android.app.Application
 import android.content.Context
 import android.content.Intent
 import android.content.res.Resources
 import android.util.Pair
 import androidx.activity.result.ActivityResultLauncher
 import com.document.scanner.R
+import com.document.scanner.activity.CropActivity
 import com.document.scanner.data.BoundingRect
 
-import com.wonderscan.android.data.Frame
+import com.document.scanner.data.Frame
+import com.document.scanner.repository.FrameRepository
 import org.opencv.core.*
 import org.opencv.imgcodecs.Imgcodecs
 import org.opencv.imgproc.Imgproc
@@ -73,7 +74,7 @@ object Utils {
         }
     }
 
-  /*  fun cropAndFormat(frame: Frame, application: Application, frameDao: FrameDao) {
+    fun cropAndFormat(frame: Frame, application: Context?, frameRepository: FrameRepository) {
         val originalMat = Imgcodecs.imread(frame.uri)
         val ratio = getDeviceWidth() / originalMat.width().toDouble()
         val bRect = findCorners(originalMat, ratio)
@@ -84,7 +85,7 @@ object Utils {
             croppedMat = Mat()
             originalMat.copyTo(croppedMat)
         }
-        val croppedPath = createPhotoFile(application).absolutePath
+        val croppedPath = createPhotoFile(application!!).absolutePath
         Imgcodecs.imwrite(croppedPath, croppedMat)
         val editedMat = Filter.auto(croppedMat)
         val editedPath = createPhotoFile(application).absolutePath
@@ -92,12 +93,12 @@ object Utils {
 
         frame.croppedUri = croppedPath
         frame.editedUri = editedPath
-        frameDao.update(frame)
+        frameRepository.update(frame)
 
         originalMat.release()
         croppedMat.release()
         editedMat.release()
-    }*/
+    }
 
     private fun findCorners(sourceMat: Mat, ratio: Double): BoundingRect? {
         val mat = sourceMat.clone()

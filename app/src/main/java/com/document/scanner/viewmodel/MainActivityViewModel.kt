@@ -1,42 +1,47 @@
 package com.document.scanner.viewmodel
 
 
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.viewModelScope
-import com.document.scanner.dao.DocumentDao
-import com.document.scanner.dao.FrameDao
+import android.app.Application
+import androidx.lifecycle.*
 import com.document.scanner.data.Document
+import com.document.scanner.repository.DocumentRepository
+import com.document.scanner.repository.FrameRepository
+import com.document.scanner.task.backGroundThread
 
 import kotlinx.coroutines.launch
 
-class MainActivityViewModel(
-    private val documentDao: DocumentDao?,
-    frameDao: FrameDao?
-) : MainViewModel(frameDao) {
-    var docId: Long? = null
+class MainActivityViewModel: BaseViewModel() {
+
+    private val documentRepository = DocumentRepository(context)
+    private val frameRepository = FrameRepository(context)
+
+
     private var documents: LiveData<MutableList<Document>>? = null
 
     fun getAllDocuments(): LiveData<MutableList<Document>>? {
         if (documents == null) {
             viewModelScope.launch {
-                documents = documentDao?.getAllDocuments()
+                documents = documentRepository?.getAllDocuments()
             }
         }
         return documents
     }
-}
 
-class MainActivityViewModelFactory(
-    private val documentDao: DocumentDao,
-    private val frameDao: FrameDao
-) : ViewModelProvider.Factory {
-
-
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        @Suppress("UNCHECKED_CAST")
-        return MainActivityViewModel(documentDao, frameDao) as T
+    fun getPageCount(docId: String): LiveData<Int> {
+        lateinit var count: LiveData<Int>
+        viewModelScope.launch {
+            count = frameRepository.getFrameCount(docId) ?: MutableLiveData(0)
+        }
+        return count
     }
 
+    fun getFirstFrameImagePath(docId: String): LiveData<String>? {
+        return frameRepository.getFrameUri(docId)
+    }
+
+    fun deleteDocument(docId: String){
+        backGroundThread {
+            documentRepository.delete(docId)
+        }
+    }
 }

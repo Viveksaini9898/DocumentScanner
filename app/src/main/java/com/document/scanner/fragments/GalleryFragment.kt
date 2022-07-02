@@ -8,79 +8,79 @@ import android.provider.MediaStore
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.document.scanner.R
+import com.document.scanner.activity.GalleryListFramesActivity
+import com.document.scanner.activity.ListFramesActivity
 import com.document.scanner.adapter.GalleryAdapter
+import com.document.scanner.constants.INTENT_GALLERY
+import com.document.scanner.constants.INTENT_URIS
+import com.document.scanner.databinding.FragmentGalleryBinding
+import com.document.scanner.extension.viewBinding
+import com.document.scanner.task.backGroundThread
+import com.document.scanner.task.uiThread
+import com.document.scanner.viewmodel.ImageViewModel
+import com.document.scanner.viewmodel.ScanActivityViewModel
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.util.*
 
-open class GalleryFragment : Fragment() {
-    private lateinit var adapter: GalleryAdapter
+class GalleryFragment : BaseFragment<FragmentGalleryBinding, ImageViewModel>() {
+
+    private var adapter: GalleryAdapter? = null
+    val scanViewModel: ScanActivityViewModel by viewModels()
 
     override fun onResume() {
         super.onResume()
-        adapter.reset()
+        adapter?.reset()
     }
 
-    private fun getAllImages(): MutableList<String> {
-        val uris: MutableList<String> = ArrayList()
-        val projection = arrayOf(MediaStore.MediaColumns.DATA)
-        activity?.contentResolver?.query(
-            MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-            projection,
-            null,
-            null,
-            MediaStore.Images.Media.DATE_ADDED + " DESC"
-        )?.let { cursor ->
-            while (cursor.moveToNext()) {
-                val absolutePathOfImage =
-                    cursor.getString(cursor.getColumnIndex(MediaStore.MediaColumns.DATA))
-                uris.add(absolutePathOfImage)
-            }
-            cursor.close()
-        }
-        return uris
+
+    override val viewBinding: FragmentGalleryBinding by viewBinding(FragmentGalleryBinding::inflate)
+
+
+    override val viewModel: ImageViewModel by viewModels()
+
+    override fun onLoadData() {
+
     }
 
-    @SuppressLint("NotifyDataSetChanged")
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View? {
-        val v = inflater.inflate(R.layout.fragment_gallery, container, false)
+    override fun onReady() {
+        onCreate()
+    }
+
+    fun onCreate() = with(viewBinding) {
+
         adapter = GalleryAdapter(activity, emptyList())
-        v.findViewById<RecyclerView>(R.id.recycler_view).let {
+        recyclerView.let {
             it.setHasFixedSize(true)
             it.layoutManager = GridLayoutManager(activity, 5)
             it.adapter = adapter
         }
-        lifecycleScope.launch(Dispatchers.Main) {
-            val uris = getAllImages()
-            adapter.setImagePaths(uris)
-            lifecycleScope.launch(Dispatchers.Main) { adapter.notifyDataSetChanged() }
+
+        viewModel.getAllUris.observe(this@GalleryFragment){
+            adapter?.setImagePaths(it)
+            adapter?.notifyDataSetChanged()
         }
-        v.findViewById<View?>(R.id.fab).setOnClickListener {
-            v.findViewById<View?>(R.id.gallery_progress).visibility = View.VISIBLE
-            lifecycleScope.launch(Dispatchers.IO) {
-                adapter.getSelectedUris().let { uris ->
-                    /*Intent(activity, CropAndListFramesActivity::class.java).let {
-                        it.putExtra(getString(R.string.intent_uris), uris)
-                        adapter.clearSelection()
-                        lifecycleScope.launch(Dispatchers.Main) {
-                            startActivity(it)
-                            v.findViewById<View?>(R.id.gallery_progress).visibility = View.GONE
-                        }
-                    }*/
+        fab.setOnClickListener {
+            adapter?.getSelectedUris().let { uris ->
+                if (uris?.isNotEmpty() == true) {
+                    Intent(activity, GalleryListFramesActivity::class.java).let {
+                        it.putExtra(INTENT_URIS, uris)
+                        adapter?.clearSelection()
+                        startActivity(it)
+                    }
+                }else {
+                    Toast.makeText(requireContext(), "Please select image", Toast.LENGTH_SHORT).show()
                 }
+
             }
         }
-
-        return v
     }
 }

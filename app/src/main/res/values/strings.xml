@@ -9,5 +9,19 @@
     <string name="confirm">Confirm</string>
     <string name="retake">Retake</string>
     <string name="cancel">Cancel</string>
+    <string name="crop">Crop</string>
+    <string name="add_page">Add page</string>
+    <string name="reorder">Reorder</string>
+    <string name="rotate">Rotate</string>
+    <string name="filter">Filter</string>
+    <string name="delete">Delete</string>
+
+    <string name="error_scan_failed">Could not scan the document. Please try again later.</string>
+    <string name="error_cannot_crop">Cannot crop. Please readjust the crop area.</string>
+    <string name="save_pdf">Save</string>
+    <string name="ocr">OCR</string>
+    <string name="modify">Modify</string>
+    <string name="speak">Speak</string>
+    <string name="note">Note</string>
 
 </resources>
